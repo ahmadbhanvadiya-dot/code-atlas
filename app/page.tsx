@@ -7,6 +7,7 @@ export default function Home() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState("");
+  
 
   async function analyzeRepo() {
     try {
@@ -30,6 +31,10 @@ export default function Home() {
 });
 
 const summaryData = await summaryRes.json();
+
+console.log("SUMMARY DATA:", summaryData);
+
+setSummary(summaryData.summary);
 
 setSummary(summaryData.summary);
 
@@ -131,7 +136,10 @@ setSummary(summaryData.summary);
                 )
               )}
             </div>
-
+          <div className="text-red-500">
+  Summary:
+  {JSON.stringify(summary)}
+</div>
             <h3 className="text-xl font-semibold mt-8 mb-3">
               Top Dependencies
             </h3>

@@ -46,7 +46,19 @@ Keep the answer concise.
     }
   );
 
+  
   const data = await response.json();
+  if (!response.ok) {
+  console.error("Gemini Error:", data);
+  return `Gemini Error: ${JSON.stringify(data)}`;
+}
+
+console.log(
+  "GEMINI RESPONSE:",
+  JSON.stringify(data, null, 2)
+);
+
+
 
   return (
     data?.candidates?.[0]?.content?.parts?.[0]?.text ||
