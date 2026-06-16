@@ -1,13 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import ReactMarkdown from "react-markdown";
+
 
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [summary, setSummary] = useState("");
+const [aiData, setAiData] = useState<any>(null);
+
   
 
   async function analyzeRepo() {
@@ -32,13 +34,15 @@ export default function Home() {
 });
 
 const summaryData = await summaryRes.json();
-console.log("SUMMARY RECEIVED:", summaryData.summary);
-console.log("TYPE:", typeof summaryData.summary);
-
-console.log("SUMMARY DATA:", summaryData);
-
 
 setSummary(summaryData.summary);
+
+try {
+  const parsed = JSON.parse(summaryData.summary);
+  setAiData(parsed);
+} catch (err) {
+  console.error("JSON Parse Error:", err);
+}
 
       setResult(data);
     } catch (error) {
@@ -76,21 +80,91 @@ setSummary(summaryData.summary);
             ? "Analyzing..."
             : "Analyze Repository"}
         </button>
-        <div className="mt-4 p-4 bg-red-900 text-white rounded">
-  Summary Length: {summary.length}
-</div>
+      
 
-{summary && (
-  <div className="mt-6 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
-    <h2 className="text-2xl font-bold mb-4">
-      AI Summary
+{aiData && (
+  <div className="mt-8 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+
+    <h2 className="text-3xl font-bold mb-6">
+      Repository Analysis
     </h2>
 
-  <div className="prose prose-invert max-w-none">
-  <ReactMarkdown>
-    {summary}
-  </ReactMarkdown>
-</div>
+    <p className="text-zinc-300 leading-relaxed">
+      {aiData.overview}
+    </p>
+
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+
+      <div className="bg-zinc-800 p-4 rounded-xl">
+        <p className="text-zinc-400 text-sm">
+          Documentation
+        </p>
+
+        <h3 className="text-3xl font-bold mt-2">
+          {aiData.documentationScore}
+        </h3>
+      </div>
+
+      <div className="bg-zinc-800 p-4 rounded-xl">
+        <p className="text-zinc-400 text-sm">
+          Organization
+        </p>
+
+        <h3 className="text-3xl font-bold mt-2">
+          {aiData.organizationScore}
+        </h3>
+      </div>
+
+      <div className="bg-zinc-800 p-4 rounded-xl">
+        <p className="text-zinc-400 text-sm">
+          Beginner Friendly
+        </p>
+
+        <h3 className="text-3xl font-bold mt-2">
+          {aiData.beginnerFriendliness}
+        </h3>
+      </div>
+
+    </div>
+
+    <div className="mt-6">
+      <span className="bg-blue-600 px-4 py-2 rounded-full text-sm font-semibold">
+        Difficulty: {aiData.difficulty}
+      </span>
+    </div>
+
+    <h3 className="text-2xl font-bold mt-10 mb-4">
+      Technologies
+    </h3>
+
+    <div className="flex flex-wrap gap-2">
+      {aiData.technologies?.map((tech: string) => (
+        <span
+          key={tech}
+          className="bg-zinc-800 px-4 py-2 rounded-full"
+        >
+          {tech}
+        </span>
+      ))}
+    </div>
+
+    <h3 className="text-2xl font-bold mt-10 mb-4">
+      Learning Roadmap
+    </h3>
+
+    <div className="space-y-3">
+      {aiData.roadmap?.map(
+        (step: string, index: number) => (
+          <div
+            key={index}
+            className="bg-zinc-800 p-4 rounded-xl"
+          >
+            Step {index + 1} → {step}
+          </div>
+        )
+      )}
+    </div>
+
   </div>
 )}
 
