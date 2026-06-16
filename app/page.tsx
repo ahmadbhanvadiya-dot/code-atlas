@@ -56,6 +56,13 @@ try {
     }
   }
 
+const folders =
+  result?.tree
+    ?.filter((path: string) => path.includes("/"))
+    .map((path: string) => path.split("/")[0]);
+
+const uniqueFolders = [...new Set(folders)];
+
   return (
     <main className="min-h-screen bg-black text-white flex flex-col items-center p-6">
       <div className="w-full max-w-3xl mt-20">
@@ -243,8 +250,8 @@ try {
 </h3>
 
 <div className="bg-black rounded-xl p-4 border border-zinc-800">
-  <pre className="text-green-400 text-sm overflow-auto max-h-96 whitespace-pre-wrap">
-    {result.tree?.slice(0, 100).join("\n")}
+  <pre className="text-green-400">
+{uniqueFolders?.map(folder => `📁 ${folder}`).join("\n")}
   </pre>
 </div>
 
