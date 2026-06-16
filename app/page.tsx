@@ -31,10 +31,11 @@ export default function Home() {
 });
 
 const summaryData = await summaryRes.json();
+console.log("SUMMARY RECEIVED:", summaryData.summary);
+console.log("TYPE:", typeof summaryData.summary);
 
 console.log("SUMMARY DATA:", summaryData);
 
-setSummary(summaryData.summary);
 
 setSummary(summaryData.summary);
 
@@ -53,7 +54,7 @@ setSummary(summaryData.summary);
           CodeAtlas
         </h1>
 
-        <p className="text-zinc-800 text-center mt-4 mb-10">
+        <p className="text-zinc-400 text-center mt-4 mb-10">
           Turn repositories into roadmaps.
         </p>
 
@@ -74,6 +75,9 @@ setSummary(summaryData.summary);
             ? "Analyzing..."
             : "Analyze Repository"}
         </button>
+        <div className="mt-4 p-4 bg-red-900 text-white rounded">
+  Summary Length: {summary.length}
+</div>
 
 {summary && (
   <div className="mt-6 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
@@ -81,9 +85,9 @@ setSummary(summaryData.summary);
       AI Summary
     </h2>
 
-    <pre className="whitespace-pre-wrap text-zinc-300">
-      {summary}
-    </pre>
+   <div className="text-white text-lg">
+  {summary}
+</div>
   </div>
 )}
 
