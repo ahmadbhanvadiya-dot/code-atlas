@@ -99,10 +99,27 @@ const uniqueFolders = [...new Set(folders)];
     <h2 className="text-3xl font-bold mb-6">
       Repository Analysis
     </h2>
+    <div className="text-center mb-8">
+  <div className="text-7xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
+    {aiData.overallScore}
+  </div>
 
-    <p className="text-zinc-300 leading-relaxed">
-      {aiData.overview}
-    </p>
+  <p className="text-zinc-400 mt-2">
+    Repository Score
+  </p>
+</div>
+
+    <div
+  className={`text-7xl font-bold ${
+    aiData.overallScore >= 80
+      ? "text-green-500"
+      : aiData.overallScore >= 60
+      ? "text-yellow-500"
+      : "text-red-500"
+  }`}
+>
+  {aiData.overallScore}
+</div>
 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
 
@@ -184,9 +201,12 @@ const uniqueFolders = [...new Set(folders)];
     (question: string, index: number) => (
       <div
         key={index}
-        className="bg-zinc-800 p-4 rounded-xl"
+        className="bg-zinc-800 p-4 rounded-xl border border-zinc-700"
       >
-        {index + 1}. {question}
+        <span className="font-semibold">
+          Q{index + 1}.
+        </span>{" "}
+        {question}
       </div>
     )
   )}
