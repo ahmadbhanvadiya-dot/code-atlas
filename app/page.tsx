@@ -48,7 +48,7 @@ setSummary(summaryData.summary);
           CodeAtlas
         </h1>
 
-        <p className="text-zinc-400 text-center mt-4 mb-10">
+        <p className="text-zinc-800 text-center mt-4 mb-10">
           Turn repositories into roadmaps.
         </p>
 
