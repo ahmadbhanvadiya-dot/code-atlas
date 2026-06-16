@@ -99,6 +99,9 @@ const uniqueFolders = [...new Set(folders)];
     <h2 className="text-3xl font-bold mb-6">
       Repository Analysis
     </h2>
+    <pre className="bg-red-900 p-4 rounded mt-4">
+  {JSON.stringify(aiData, null, 2)}
+</pre>
     <div className="text-center mb-8">
   <div className="text-7xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
     {aiData.overallScore}
