@@ -24,8 +24,12 @@ const [aiData, setAiData] = useState<any>(null);
         body: JSON.stringify({ repoUrl }),
       });
 
-      const data = await res.json();
-      const summaryRes = await fetch("/api/summary", {
+     const data = await res.json();
+
+console.log("ANALYZE DATA:", data);
+console.log("TREE:", data.tree);
+
+const summaryRes = await fetch("/api/summary", {
   method: "POST",
   headers: {
     "Content-Type": "application/json",
@@ -234,6 +238,15 @@ try {
                 )
               )}
             </div>
+            <h3 className="text-2xl font-bold mt-10 mb-4">
+  Architecture
+</h3>
+
+<div className="bg-black rounded-xl p-4 border border-zinc-800">
+  <pre className="text-green-400 text-sm overflow-auto max-h-96 whitespace-pre-wrap">
+    {result.tree?.slice(0, 100).join("\n")}
+  </pre>
+</div>
 
             <h3 className="text-xl font-semibold mt-8 mb-3">
               README Preview

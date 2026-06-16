@@ -54,7 +54,8 @@ return NextResponse.json({
   totalFiles: tree.length,
   importantFiles,
   projectInfo,
-  readmePreview: readme?.slice(0, 1000)
+  readmePreview: readme?.slice(0, 1000),
+  tree: tree.map((file: any) => file.path),
 });
   } catch (error) {
     console.error(error);
