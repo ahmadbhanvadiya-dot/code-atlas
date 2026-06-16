@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
 
 export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
@@ -85,8 +86,10 @@ setSummary(summaryData.summary);
       AI Summary
     </h2>
 
-   <div className="text-white text-lg">
-  {summary}
+  <div className="prose prose-invert max-w-none">
+  <ReactMarkdown>
+    {summary}
+  </ReactMarkdown>
 </div>
   </div>
 )}
