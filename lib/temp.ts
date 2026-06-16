@@ -39,7 +39,11 @@ Return ONLY valid JSON.
   "beginnerFriendliness": 0,
   "technologies": [],
   "roadmap": []
+  "interviewQuestions": []
 }
+Generate 5 interview questions that someone might be asked after working on or studying this repository.
+
+Questions should be specific to the technologies and architecture used. 
 
 Do not include markdown.
 Do not wrap in code blocks.

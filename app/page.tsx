@@ -175,6 +175,22 @@ const uniqueFolders = [...new Set(folders)];
         )
       )}
     </div>
+    <h3 className="text-2xl font-bold mt-10 mb-4">
+  Interview Questions
+</h3>
+
+<div className="space-y-3">
+  {aiData.interviewQuestions?.map(
+    (question: string, index: number) => (
+      <div
+        key={index}
+        className="bg-zinc-800 p-4 rounded-xl"
+      >
+        {index + 1}. {question}
+      </div>
+    )
+  )}
+</div>
 
   </div>
 )}
