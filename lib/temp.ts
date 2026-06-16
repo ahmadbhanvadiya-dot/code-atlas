@@ -24,19 +24,26 @@ Total Files:
 ${repoData.totalFiles}
 
 Dependencies:
-${repoData.projectInfo?.devDependencies?.join(", ")}
+${repoData.projectInfo?.dependencies?.join(", ")}
 
 README:
 ${repoData.readmePreview}
 
-Explain:
+Return ONLY valid JSON.
 
-1. What this project does
-2. Main technologies used
-3. Folder architecture overview
-4. Learning roadmap for a beginner
+{
+  "overview": "",
+  "difficulty": "",
+  "documentationScore": 0,
+  "organizationScore": 0,
+  "beginnerFriendliness": 0,
+  "technologies": [],
+  "roadmap": []
+}
 
-Keep the answer concise.
+Do not include markdown.
+Do not wrap in code blocks.
+Return raw JSON only.
 `,
               },
             ],
