@@ -463,7 +463,7 @@ ${aiData.interviewQuestions
   onClick={() => setChatOpen(true)}
   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:scale-105 text-white px-6 py-4 rounded-full shadow-2xl font-bold transition flex items-center gap-2 border border-white/10"
 >
-  🤖 Ask CodeAtlas
+  🤖 Ask Atlas AI
 </button>
     )}
 
@@ -472,7 +472,7 @@ ${aiData.interviewQuestions
         <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-5 py-4 flex items-center justify-between">
           <div>
             <h2 className="font-bold text-lg">
-              CodeAtlas AI Bot
+              Atlas AI Bot
             </h2>
             <p className="text-blue-100 text-xs">
               Ask about this repository
