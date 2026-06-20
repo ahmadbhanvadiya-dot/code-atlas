@@ -7,7 +7,6 @@ export default function Home() {
   const [repoUrl, setRepoUrl] = useState("");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
-  const [summary, setSummary] = useState("");
 const [aiData, setAiData] = useState<any>(null);
 
   
@@ -39,7 +38,7 @@ const summaryRes = await fetch("/api/summary", {
 
 const summaryData = await summaryRes.json();
 
-setSummary(summaryData.summary);
+
 
 try {
   const parsed = JSON.parse(summaryData.summary);
@@ -99,9 +98,7 @@ const uniqueFolders = [...new Set(folders)];
     <h2 className="text-3xl font-bold mb-6">
       Repository Analysis
     </h2>
-    <pre className="bg-red-900 p-4 rounded mt-4">
-  {JSON.stringify(aiData, null, 2)}
-</pre>
+    
     <div className="text-center mb-8">
   <div className="text-7xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
     {aiData.overallScore}
@@ -112,17 +109,7 @@ const uniqueFolders = [...new Set(folders)];
   </p>
 </div>
 
-    <div
-  className={`text-7xl font-bold ${
-    aiData.overallScore >= 80
-      ? "text-green-500"
-      : aiData.overallScore >= 60
-      ? "text-yellow-500"
-      : "text-red-500"
-  }`}
->
-  {aiData.overallScore}
-</div>
+  
 
     <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
 
