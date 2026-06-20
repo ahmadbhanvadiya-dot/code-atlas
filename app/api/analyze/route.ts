@@ -19,29 +19,35 @@ export async function POST(req: Request) {
     let projectInfo = null;
 
     try {
-      const packageJsonContent = await getFileContent(
-        owner,
-        repo,
-        "package.json"
-      );
+  const packageJsonFile = tree.find(
+    (file: any) =>
+      file.type === "blob" &&
+      (file.path === "package.json" ||
+        file.path.endsWith("/package.json"))
+  );
 
-      if (packageJsonContent) {
-        const packageJson = JSON.parse(packageJsonContent);
+  const packageJsonContent = packageJsonFile
+    ? await getFileContent(owner, repo, packageJsonFile.path)
+    : null;
 
-        projectInfo = {
-          name: packageJson.name,
-          version: packageJson.version,
-          packageManager: packageJson.packageManager,
-          scripts: Object.keys(packageJson.scripts || {}),
-          dependencies: Object.keys(packageJson.dependencies || {}),
-          devDependencies: Object.keys(
-            packageJson.devDependencies || {}
-          ).slice(0, 20),
-        };
-      }
-    } catch (error) {
-      console.error("Failed to parse package.json", error);
-    }
+  if (packageJsonContent) {
+    const packageJson = JSON.parse(packageJsonContent);
+
+    projectInfo = {
+      name: packageJson.name,
+      version: packageJson.version,
+      packageManager: packageJson.packageManager,
+      packagePath: packageJsonFile.path,
+      scripts: Object.keys(packageJson.scripts || {}),
+      dependencies: Object.keys(packageJson.dependencies || {}),
+      devDependencies: Object.keys(
+        packageJson.devDependencies || {}
+      ).slice(0, 20),
+    };
+  }
+} catch (error) {
+  console.error("Failed to parse package.json", error);
+} 
 
     const readme = await getReadmeContent(owner, repo);
 
