@@ -217,7 +217,9 @@ ${aiData.interviewQuestions
           onChange={(e) => setRepoUrl(e.target.value)}
           className="w-full p-4 rounded-lg bg-zinc-900 border border-zinc-700 outline-none"
         />
+
         
+
 
         <button
           onClick={analyzeRepo}
