@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 
 export default function Home() {
@@ -8,12 +8,34 @@ export default function Home() {
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
 const [aiData, setAiData] = useState<any>(null);
+const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
   
+const loadingMessages = [
+  "🔍 Scanning repository...",
+  "📂 Mapping architecture...",
+  "🧠 Understanding codebase...",
+  "📚 Generating roadmap...",
+  "🎤 Creating interview questions...",
+];
+useEffect(() => {
+  if (!loading) return;
+
+  const interval = setInterval(() => {
+    setLoadingMessageIndex((prev) =>
+      (prev + 1) % loadingMessages.length
+    );
+  }, 1500);
+
+  return () => clearInterval(interval);
+}, [loading]);
 
   async function analyzeRepo() {
     try {
       setLoading(true);
+setAiData(null);
+setResult(null);
+setLoadingMessageIndex(0);
 
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -87,8 +109,8 @@ const uniqueFolders = [...new Set(folders)];
           className="w-full mt-4 p-4 rounded-lg bg-white text-black font-semibold hover:bg-zinc-200 transition"
         >
           {loading
-            ? "Analyzing..."
-            : "Analyze Repository"}
+  ? loadingMessages[loadingMessageIndex]
+  : "Analyze Repository"}
         </button>
       
 
