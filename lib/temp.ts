@@ -28,6 +28,16 @@ ${repoData.projectInfo?.dependencies?.join(", ")}
 
 README:
 ${repoData.readmePreview}
+Important Code Files:
+${repoData.importantFileContents
+  ?.map(
+    (file: any) => `
+FILE: ${file.path}
+
+${file.content}
+`
+  )
+  .join("\n\n")}
 
 Return ONLY valid JSON.
 
