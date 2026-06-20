@@ -514,7 +514,7 @@ ${aiData.interviewQuestions
               <div className="bg-zinc-800 text-zinc-400 rounded-xl p-3 text-sm">
                 <div className="flex items-center gap-2">
                  <span className="animate-pulse">●</span>
-                  <span>CodeAtlas is thinking...</span>
+                  <span>Atlas is thinking...</span>
                </div>
               </div>
             </div>
