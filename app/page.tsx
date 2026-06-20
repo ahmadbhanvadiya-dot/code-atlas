@@ -25,6 +25,7 @@ export default function Home() {
   const [messages, setMessages] = useState<any[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [chatLoading, setChatLoading] = useState(false);
+  const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
     if (!loading) return;
@@ -206,6 +207,7 @@ ${aiData.interviewQuestions
       setMessages([]);
       setChatInput("");
       setChatLoading(false);
+      setChatOpen(false);
 
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -446,86 +448,112 @@ ${aiData.interviewQuestions
           </div>
         )}
 
-        {result && (
-          <div className="mt-10 bg-zinc-900 rounded-xl p-6 border border-zinc-800">
-            <h2 className="text-3xl font-bold mb-2">
+       {result && (
+  <div className="fixed bottom-6 right-6 z-50">
+    {!chatOpen && (
+      <button
+        onClick={() => setChatOpen(true)}
+        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-4 rounded-full shadow-2xl font-semibold transition flex items-center gap-2"
+      >
+        🤖 Ask CodeAtlas
+      </button>
+    )}
+
+    {chatOpen && (
+      <div className="w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[80vh] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
+        <div className="bg-blue-600 px-5 py-4 flex items-center justify-between">
+          <div>
+            <h2 className="font-bold text-lg">
               CodeAtlas AI Bot
             </h2>
-
-            <p className="text-zinc-400 mb-6">
-              Ask questions about this repository’s architecture, files, tech stack, roadmap, or improvements.
+            <p className="text-blue-100 text-xs">
+              Ask about this repository
             </p>
-
-            <div className="bg-black border border-zinc-800 rounded-xl p-4 min-h-72 max-h-96 overflow-y-auto space-y-4">
-              {messages.map((message, index) => (
-                <div
-                  key={index}
-                  className={`flex ${
-                    message.role === "user" ? "justify-end" : "justify-start"
-                  }`}
-                >
-                  <div
-                    className={`max-w-[85%] rounded-xl p-4 whitespace-pre-wrap leading-relaxed ${
-                      message.role === "user"
-                        ? "bg-blue-600 text-white"
-                        : "bg-zinc-800 text-zinc-200"
-                    }`}
-                  >
-                    {message.text}
-                  </div>
-                </div>
-              ))}
-
-              {chatLoading && (
-                <div className="flex justify-start">
-                  <div className="bg-zinc-800 text-zinc-400 rounded-xl p-4">
-                    CodeAtlas is thinking...
-                  </div>
-                </div>
-              )}
-            </div>
-
-            <div className="flex gap-3 mt-4">
-              <input
-                value={chatInput}
-                onChange={(e) => setChatInput(e.target.value)}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    sendChatMessage();
-                  }
-                }}
-                placeholder="Ask something about this repo..."
-                className="flex-1 p-4 rounded-lg bg-black border border-zinc-700 outline-none text-white"
-              />
-
-              <button
-                onClick={sendChatMessage}
-                disabled={chatLoading || !chatInput.trim()}
-                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 px-6 py-4 rounded-lg font-semibold transition"
-              >
-                Send
-              </button>
-            </div>
-
-            <div className="flex flex-wrap gap-2 mt-4">
-              {[
-                "What files should I read first?",
-                "Explain the architecture.",
-                "How can this project be improved?",
-                "Where is authentication handled?",
-              ].map((question) => (
-                <button
-                  key={question}
-                  onClick={() => setChatInput(question)}
-                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-lg text-sm transition"
-                >
-                  {question}
-                </button>
-              ))}
-            </div>
           </div>
-        )}
+
+          <button
+            onClick={() => setChatOpen(false)}
+            className="text-white text-xl font-bold hover:opacity-80"
+          >
+            −
+          </button>
+        </div>
+
+        <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-black">
+          {messages.map((message, index) => (
+            <div
+              key={index}
+              className={`flex ${
+                message.role === "user"
+                  ? "justify-end"
+                  : "justify-start"
+              }`}
+            >
+              <div
+                className={`max-w-[85%] rounded-xl p-3 text-sm whitespace-pre-wrap leading-relaxed ${
+                  message.role === "user"
+                    ? "bg-blue-600 text-white"
+                    : "bg-zinc-800 text-zinc-200"
+                }`}
+              >
+                {message.text}
+              </div>
+            </div>
+          ))}
+
+          {chatLoading && (
+            <div className="flex justify-start">
+              <div className="bg-zinc-800 text-zinc-400 rounded-xl p-3 text-sm">
+                CodeAtlas is thinking...
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="border-t border-zinc-800 p-3 bg-zinc-950">
+          <div className="flex gap-2">
+            <input
+              value={chatInput}
+              onChange={(e) => setChatInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  sendChatMessage();
+                }
+              }}
+              placeholder="Ask a question..."
+              className="flex-1 p-3 rounded-lg bg-zinc-900 border border-zinc-700 outline-none text-white text-sm"
+            />
+
+            <button
+              onClick={sendChatMessage}
+              disabled={chatLoading || !chatInput.trim()}
+              className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 px-4 rounded-lg font-semibold transition"
+            >
+              ➤
+            </button>
+          </div>
+
+          <div className="flex flex-wrap gap-2 mt-3">
+            {[
+              "What files should I read first?",
+              "Explain the architecture.",
+              "How can this project be improved?",
+            ].map((question) => (
+              <button
+                key={question}
+                onClick={() => setChatInput(question)}
+                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-lg text-xs transition"
+              >
+                {question}
+              </button>
+            ))}
+          </div>
+        </div>
+      </div>
+    )}
+  </div>
+)}
 
         {result && (
           <div className="mt-10 bg-zinc-900 rounded-xl p-6 border border-zinc-800">
