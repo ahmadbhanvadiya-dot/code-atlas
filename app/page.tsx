@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const loadingMessages = [
   "🔍 Scanning repository...",
@@ -11,6 +11,7 @@ const loadingMessages = [
 ];
 
 export default function Home() {
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
   const [repoUrl, setRepoUrl] = useState("");
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
@@ -28,6 +29,13 @@ export default function Home() {
   const [chatOpen, setChatOpen] = useState(false);
 
   useEffect(() => {
+
+    useEffect(() => {
+  chatEndRef.current?.scrollIntoView({
+    behavior: "smooth",
+  });
+}, [messages, chatLoading]);
+
     if (!loading) return;
 
     const interval = setInterval(() => {
@@ -452,16 +460,16 @@ ${aiData.interviewQuestions
   <div className="fixed bottom-6 right-6 z-50">
     {!chatOpen && (
       <button
-        onClick={() => setChatOpen(true)}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-5 py-4 rounded-full shadow-2xl font-semibold transition flex items-center gap-2"
-      >
-        🤖 Ask CodeAtlas
-      </button>
+  onClick={() => setChatOpen(true)}
+  className="bg-gradient-to-r from-blue-600 to-purple-600 hover:scale-105 text-white px-6 py-4 rounded-full shadow-2xl font-bold transition flex items-center gap-2 border border-white/10"
+>
+  🤖 Ask CodeAtlas
+</button>
     )}
 
     {chatOpen && (
       <div className="w-[380px] max-w-[calc(100vw-2rem)] h-[560px] max-h-[80vh] bg-zinc-950 border border-zinc-800 rounded-2xl shadow-2xl flex flex-col overflow-hidden">
-        <div className="bg-blue-600 px-5 py-4 flex items-center justify-between">
+        <div className="bg-gradient-to-r from-blue-600 to-purple-600 px-5 py-4 flex items-center justify-between">
           <div>
             <h2 className="font-bold text-lg">
               CodeAtlas AI Bot
@@ -504,10 +512,14 @@ ${aiData.interviewQuestions
           {chatLoading && (
             <div className="flex justify-start">
               <div className="bg-zinc-800 text-zinc-400 rounded-xl p-3 text-sm">
-                CodeAtlas is thinking...
+                <div className="flex items-center gap-2">
+                 <span className="animate-pulse">●</span>
+                  <span>CodeAtlas is thinking...</span>
+               </div>
               </div>
             </div>
           )}
+          <div ref={chatEndRef} />
         </div>
 
         <div className="border-t border-zinc-800 p-3 bg-zinc-950">
@@ -535,20 +547,20 @@ ${aiData.interviewQuestions
           </div>
 
           <div className="flex flex-wrap gap-2 mt-3">
-            {[
-              "What files should I read first?",
-              "Explain the architecture.",
-              "How can this project be improved?",
-            ].map((question) => (
-              <button
-                key={question}
-                onClick={() => setChatInput(question)}
-                className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-lg text-xs transition"
-              >
-                {question}
-              </button>
-            ))}
-          </div>
+  {[
+    "What files should I read first?",
+    "Explain the architecture.",
+    "How can this be improved?",
+  ].map((question) => (
+    <button
+      key={question}
+      onClick={() => setChatInput(question)}
+      className="bg-zinc-900 hover:bg-zinc-800 border border-zinc-700 text-zinc-300 px-3 py-2 rounded-full text-xs transition"
+    >
+      {question}
+    </button>
+  ))}
+</div>
         </div>
       </div>
     )}
