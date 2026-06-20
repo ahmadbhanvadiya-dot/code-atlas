@@ -20,6 +20,7 @@ export default function Home() {
   const [copied, setCopied] = useState(false);
   const [copiedInterview, setCopiedInterview] = useState(false);
   const [sharedSummary, setSharedSummary] = useState(false);
+  const [error, setError] = useState("");
 
   useEffect(() => {
     if (!loading) return;
@@ -140,6 +141,7 @@ ${aiData.interviewQuestions
   async function analyzeRepo() {
     try {
       setLoading(true);
+      setError("");
       setAiData(null);
       setResult(null);
       setLoadingMessageIndex(0);
@@ -156,6 +158,10 @@ ${aiData.interviewQuestions
       });
 
       const data = await res.json();
+      if (!data.success) {
+  setError(data.error || "Failed to analyze repository.");
+  return;
+}
 
       const summaryRes = await fetch("/api/summary", {
         method: "POST",
@@ -166,6 +172,10 @@ ${aiData.interviewQuestions
       });
 
       const summaryData = await summaryRes.json();
+      if (!summaryData.success) {
+  setError(summaryData.error || "Failed to generate AI summary.");
+  return;
+}
 
       try {
         const cleanedSummary = summaryData.summary
@@ -181,8 +191,10 @@ ${aiData.interviewQuestions
 
       setResult(data);
     } catch (error) {
-      console.error(error);
-    } finally {
+  console.error(error);
+  setError("Something went wrong. Please check the repo URL and try again.");
+}
+    finally {
       setLoading(false);
     }
   }
@@ -213,6 +225,11 @@ ${aiData.interviewQuestions
         >
           {loading ? loadingMessages[loadingMessageIndex] : "Analyze Repository"}
         </button>
+        {error && (
+  <div className="mt-4 bg-red-950 border border-red-800 text-red-300 p-4 rounded-lg">
+    {error}
+  </div>
+)}
 
         {aiData && (
           <div className="mt-8 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
