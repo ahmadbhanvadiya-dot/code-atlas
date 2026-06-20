@@ -21,9 +21,10 @@ export default function Home() {
   const [copiedInterview, setCopiedInterview] = useState(false);
   const [sharedSummary, setSharedSummary] = useState(false);
   const [error, setError] = useState("");
-  const [repoQuestion, setRepoQuestion] = useState("");
-const [repoAnswer, setRepoAnswer] = useState("");
-const [asking, setAsking] = useState(false);
+
+  const [messages, setMessages] = useState<any[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [chatLoading, setChatLoading] = useState(false);
 
   useEffect(() => {
     if (!loading) return;
@@ -40,14 +41,14 @@ const [asking, setAsking] = useState(false);
       ?.filter((path: string) => path.includes("/"))
       .map((path: string) => path.split("/")[0]) ?? [];
 
-  const uniqueFolders = Array.from(new Set(folders));
+  const uniqueFolders = Array.from(new Set(folders)) as string[];
 
   const topDependencies = Array.from(
     new Set([
       ...(result?.projectInfo?.dependencies ?? []),
       ...(result?.projectInfo?.devDependencies ?? []),
     ])
-  );
+  ) as string[];
 
   const scoreColor =
     aiData?.overallScore >= 80
@@ -141,39 +142,56 @@ ${aiData.interviewQuestions
     }
   }
 
-async function askRepoQuestion() {
-  if (!repoQuestion.trim() || !result) return;
+  async function sendChatMessage() {
+    const question = chatInput.trim();
 
-  try {
-    setAsking(true);
-    setRepoAnswer("");
+    if (!question || !result) return;
 
-    const res = await fetch("/api/ask", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        repoData: result,
-        question: repoQuestion,
-      }),
-    });
+    const userMessage = {
+      role: "user",
+      text: question,
+    };
 
-    const data = await res.json();
+    setMessages((prev) => [...prev, userMessage]);
+    setChatInput("");
+    setChatLoading(true);
 
-    if (!data.success) {
-      setRepoAnswer(data.error || "Failed to answer question.");
-      return;
+    try {
+      const res = await fetch("/api/ask", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          repoData: result,
+          question,
+        }),
+      });
+
+      const data = await res.json();
+
+      const botMessage = {
+        role: "bot",
+        text: data.success
+          ? data.answer
+          : data.error || "Failed to answer question.",
+      };
+
+      setMessages((prev) => [...prev, botMessage]);
+    } catch (error) {
+      console.error(error);
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          role: "bot",
+          text: "Something went wrong while asking CodeAtlas.",
+        },
+      ]);
+    } finally {
+      setChatLoading(false);
     }
-
-    setRepoAnswer(data.answer);
-  } catch (error) {
-    console.error(error);
-    setRepoAnswer("Something went wrong while asking CodeAtlas.");
-  } finally {
-    setAsking(false);
   }
-}
 
   async function analyzeRepo() {
     try {
@@ -185,8 +203,9 @@ async function askRepoQuestion() {
       setCopied(false);
       setCopiedInterview(false);
       setSharedSummary(false);
-      setRepoQuestion("");
-      setRepoAnswer(""); 
+      setMessages([]);
+      setChatInput("");
+      setChatLoading(false);
 
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -197,10 +216,11 @@ async function askRepoQuestion() {
       });
 
       const data = await res.json();
+
       if (!data.success) {
-  setError(data.error || "Failed to analyze repository.");
-  return;
-}
+        setError(data.error || "Failed to analyze repository.");
+        return;
+      }
 
       const summaryRes = await fetch("/api/summary", {
         method: "POST",
@@ -211,10 +231,11 @@ async function askRepoQuestion() {
       });
 
       const summaryData = await summaryRes.json();
+
       if (!summaryData.success) {
-  setError(summaryData.error || "Failed to generate AI summary.");
-  return;
-}
+        setError(summaryData.error || "Failed to generate AI summary.");
+        return;
+      }
 
       try {
         const cleanedSummary = summaryData.summary
@@ -226,14 +247,21 @@ async function askRepoQuestion() {
         setAiData(parsed);
       } catch (err) {
         console.error("JSON Parse Error:", err);
+        setError("AI returned an invalid response. Please try again.");
       }
 
       setResult(data);
+
+      setMessages([
+        {
+          role: "bot",
+          text: `I've scanned ${data.owner}/${data.repo}. Ask me anything about the architecture, files, tech stack, roadmap, or improvements.`,
+        },
+      ]);
     } catch (error) {
-  console.error(error);
-  setError("Something went wrong. Please check the repo URL and try again.");
-}
-    finally {
+      console.error(error);
+      setError("Something went wrong. Please check the repo URL and try again.");
+    } finally {
       setLoading(false);
     }
   }
@@ -257,9 +285,6 @@ async function askRepoQuestion() {
           className="w-full p-4 rounded-lg bg-zinc-900 border border-zinc-700 outline-none"
         />
 
-        
-
-
         <button
           onClick={analyzeRepo}
           disabled={loading}
@@ -267,11 +292,12 @@ async function askRepoQuestion() {
         >
           {loading ? loadingMessages[loadingMessageIndex] : "Analyze Repository"}
         </button>
+
         {error && (
-  <div className="mt-4 bg-red-950 border border-red-800 text-red-300 p-4 rounded-lg">
-    {error}
-  </div>
-)}
+          <div className="mt-4 bg-red-950 border border-red-800 text-red-300 p-4 rounded-lg">
+            {error}
+          </div>
+        )}
 
         {aiData && (
           <div className="mt-8 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
@@ -305,45 +331,6 @@ async function askRepoQuestion() {
                 {aiData.overview}
               </p>
             </div>
-
-            {result && (
-  <div className="mt-10 bg-zinc-900 rounded-xl p-6 border border-zinc-800">
-    <h2 className="text-3xl font-bold mb-4">
-      Ask this Repository
-    </h2>
-
-    <p className="text-zinc-400 mb-4">
-      Ask CodeAtlas anything about this repo’s architecture, tech stack, files, or learning path.
-    </p>
-
-    <textarea
-      value={repoQuestion}
-      onChange={(e) => setRepoQuestion(e.target.value)}
-      placeholder="Example: Where is authentication handled?"
-      className="w-full min-h-28 p-4 rounded-lg bg-black border border-zinc-700 outline-none text-white"
-    />
-
-    <button
-      onClick={askRepoQuestion}
-      disabled={asking || !repoQuestion.trim()}
-      className="w-full mt-4 p-4 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 transition font-semibold"
-    >
-      {asking ? "🧠 Thinking..." : "Ask CodeAtlas"}
-    </button>
-
-    {repoAnswer && (
-      <div className="mt-6 bg-zinc-800 p-5 rounded-xl">
-        <h3 className="text-xl font-bold mb-3">
-          Answer
-        </h3>
-
-        <p className="text-zinc-300 whitespace-pre-wrap leading-relaxed">
-          {repoAnswer}
-        </p>
-      </div>
-    )}
-  </div>
-)}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
               <div className="bg-zinc-800 p-4 rounded-xl">
@@ -461,6 +448,87 @@ async function askRepoQuestion() {
 
         {result && (
           <div className="mt-10 bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+            <h2 className="text-3xl font-bold mb-2">
+              CodeAtlas AI Bot
+            </h2>
+
+            <p className="text-zinc-400 mb-6">
+              Ask questions about this repository’s architecture, files, tech stack, roadmap, or improvements.
+            </p>
+
+            <div className="bg-black border border-zinc-800 rounded-xl p-4 min-h-72 max-h-96 overflow-y-auto space-y-4">
+              {messages.map((message, index) => (
+                <div
+                  key={index}
+                  className={`flex ${
+                    message.role === "user" ? "justify-end" : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[85%] rounded-xl p-4 whitespace-pre-wrap leading-relaxed ${
+                      message.role === "user"
+                        ? "bg-blue-600 text-white"
+                        : "bg-zinc-800 text-zinc-200"
+                    }`}
+                  >
+                    {message.text}
+                  </div>
+                </div>
+              ))}
+
+              {chatLoading && (
+                <div className="flex justify-start">
+                  <div className="bg-zinc-800 text-zinc-400 rounded-xl p-4">
+                    CodeAtlas is thinking...
+                  </div>
+                </div>
+              )}
+            </div>
+
+            <div className="flex gap-3 mt-4">
+              <input
+                value={chatInput}
+                onChange={(e) => setChatInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    sendChatMessage();
+                  }
+                }}
+                placeholder="Ask something about this repo..."
+                className="flex-1 p-4 rounded-lg bg-black border border-zinc-700 outline-none text-white"
+              />
+
+              <button
+                onClick={sendChatMessage}
+                disabled={chatLoading || !chatInput.trim()}
+                className="bg-blue-600 hover:bg-blue-700 disabled:opacity-60 px-6 py-4 rounded-lg font-semibold transition"
+              >
+                Send
+              </button>
+            </div>
+
+            <div className="flex flex-wrap gap-2 mt-4">
+              {[
+                "What files should I read first?",
+                "Explain the architecture.",
+                "How can this project be improved?",
+                "Where is authentication handled?",
+              ].map((question) => (
+                <button
+                  key={question}
+                  onClick={() => setChatInput(question)}
+                  className="bg-zinc-800 hover:bg-zinc-700 text-zinc-300 px-3 py-2 rounded-lg text-sm transition"
+                >
+                  {question}
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {result && (
+          <div className="mt-10 bg-zinc-900 rounded-xl p-6 border border-zinc-800">
             <h2 className="text-3xl font-bold">
               {result.projectInfo?.name || `${result.owner}/${result.repo}`}
             </h2>
@@ -507,7 +575,7 @@ async function askRepoQuestion() {
 
             <div className="flex flex-wrap gap-2">
               {topDependencies.length > 0 ? (
-                topDependencies.map((dep: any) => (
+                topDependencies.map((dep: string) => (
                   <span
                     key={dep}
                     className="bg-zinc-800 px-3 py-1 rounded-full text-sm"
@@ -528,9 +596,9 @@ async function askRepoQuestion() {
 
             <div className="bg-black rounded-xl p-4 border border-zinc-800">
               <pre className="text-green-400 whitespace-pre-wrap text-sm">
-                {uniqueFolders.length > 0
-                  ? uniqueFolders.map((folder) => `📁 ${folder}`).join("\n")
-                  : "No architecture data found."}
+{uniqueFolders.length > 0
+  ? uniqueFolders.map((folder) => `📁 ${folder}`).join("\n")
+  : "No architecture data found."}
               </pre>
             </div>
 
