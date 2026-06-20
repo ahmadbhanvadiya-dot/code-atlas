@@ -28,12 +28,18 @@ ${file.content}
         .slice(0, 25000) || "";
 
     const prompt = `
-You are CodeAtlas, an AI codebase explainer.
+You are CodeAtlas, an AI codebase assistant.
 
-Answer the user's question using ONLY the repository information below.
-Be specific.
-Mention file names when relevant.
-If the answer is not available in the provided files, say that clearly.
+Answer the user's question directly and conversationally.
+
+Rules:
+- Start with the direct answer first.
+- Do not say phrases like "The repository information indicates", "Based on the repository", or "According to the files" unless necessary.
+- Keep answers concise unless the user asks for detail.
+- Mention file names only when they are useful.
+- Use bullet points only when they improve readability.
+- If the user asks about UI, design, color, layout, or styling, summarize the visual style in simple language first.
+- If the answer is not available in the provided files, say that clearly.
 
 Repository:
 ${repoData.owner}/${repoData.repo}
@@ -50,7 +56,6 @@ ${importantFilesText}
 User Question:
 ${question}
 `;
-
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {
