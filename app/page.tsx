@@ -9,6 +9,7 @@ export default function Home() {
   const [loading, setLoading] = useState(false);
 const [aiData, setAiData] = useState<any>(null);
 const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+const [copied, setCopied] = useState(false);
 
   
 const loadingMessages = [
@@ -29,6 +30,22 @@ useEffect(() => {
 
   return () => clearInterval(interval);
 }, [loading]);
+
+function copyRoadmap() {
+  if (!aiData?.roadmap) return;
+
+  navigator.clipboard.writeText(
+    aiData.roadmap
+      .map((step: string, index: number) => `Step ${index + 1}: ${step}`)
+      .join("\n")
+  );
+
+  setCopied(true);
+
+  setTimeout(() => {
+    setCopied(false);
+  }, 2000);
+}
 
   async function analyzeRepo() {
     try {
@@ -200,14 +217,10 @@ const uniqueFolders = [...new Set(folders)];
     </div>
 
     <button
-  onClick={() =>
-    navigator.clipboard.writeText(
-      aiData.roadmap.join("\n")
-    )
-  }
-  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg mb-4"
+  onClick={copyRoadmap}
+  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg mb-4 transition"
 >
-  📋 Copy Roadmap
+  {copied ? "✅ Copied!" : "📋 Copy Roadmap"}
 </button>
 
     <h3 className="text-2xl font-bold mt-10 mb-4">
