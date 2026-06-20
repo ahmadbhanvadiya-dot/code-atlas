@@ -158,11 +158,13 @@ const uniqueFolders = [...new Set(folders)];
 
     </div>
 
-    <div className="mt-6">
-      <span className="bg-blue-600 px-4 py-2 rounded-full text-sm font-semibold">
-        Difficulty: {aiData.difficulty}
-      </span>
-    </div>
+    <span className="bg-blue-600 px-4 py-2 rounded-full text-sm font-semibold">
+  Difficulty: {aiData.difficulty}
+</span>
+
+<p className="text-zinc-400 mt-4">
+  {aiData.difficultyReason}
+</p>
 
     <h3 className="text-2xl font-bold mt-10 mb-4">
       Technologies

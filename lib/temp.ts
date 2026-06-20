@@ -34,6 +34,8 @@ Return ONLY valid JSON.
 {
   "overview": "",
   "difficulty": "",
+  "difficultyReason": "",
+  "overallScore": 0,
   "documentationScore": 0,
   "organizationScore": 0,
   "beginnerFriendliness": 0,
