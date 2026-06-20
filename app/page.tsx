@@ -2,16 +2,6 @@
 
 import { useEffect, useState } from "react";
 
-
-export default function Home() {
-  const [repoUrl, setRepoUrl] = useState("");
-  const [result, setResult] = useState<any>(null);
-  const [loading, setLoading] = useState(false);
-const [aiData, setAiData] = useState<any>(null);
-const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
-const [copied, setCopied] = useState(false);
-
-  
 const loadingMessages = [
   "🔍 Scanning repository...",
   "📂 Mapping architecture...",
@@ -19,40 +9,143 @@ const loadingMessages = [
   "📚 Generating roadmap...",
   "🎤 Creating interview questions...",
 ];
-useEffect(() => {
-  if (!loading) return;
 
-  const interval = setInterval(() => {
-    setLoadingMessageIndex((prev) =>
-      (prev + 1) % loadingMessages.length
-    );
-  }, 1500);
+export default function Home() {
+  const [repoUrl, setRepoUrl] = useState("");
+  const [result, setResult] = useState<any>(null);
+  const [loading, setLoading] = useState(false);
+  const [aiData, setAiData] = useState<any>(null);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
-  return () => clearInterval(interval);
-}, [loading]);
+  const [copied, setCopied] = useState(false);
+  const [copiedInterview, setCopiedInterview] = useState(false);
+  const [sharedSummary, setSharedSummary] = useState(false);
 
-function copyRoadmap() {
-  if (!aiData?.roadmap) return;
+  useEffect(() => {
+    if (!loading) return;
 
-  navigator.clipboard.writeText(
-    aiData.roadmap
-      .map((step: string, index: number) => `Step ${index + 1}: ${step}`)
-      .join("\n")
+    const interval = setInterval(() => {
+      setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [loading]);
+
+  const folders =
+    result?.tree
+      ?.filter((path: string) => path.includes("/"))
+      .map((path: string) => path.split("/")[0]) ?? [];
+
+  const uniqueFolders = Array.from(new Set(folders));
+
+  const topDependencies = Array.from(
+    new Set([
+      ...(result?.projectInfo?.dependencies ?? []),
+      ...(result?.projectInfo?.devDependencies ?? []),
+    ])
   );
 
-  setCopied(true);
+  const scoreColor =
+    aiData?.overallScore >= 80
+      ? "text-green-400"
+      : aiData?.overallScore >= 60
+      ? "text-yellow-400"
+      : "text-red-400";
 
-  setTimeout(() => {
-    setCopied(false);
-  }, 2000);
-}
+  function copyRoadmap() {
+    if (!aiData?.roadmap) return;
+
+    const roadmapText = aiData.roadmap
+      .map((step: string, index: number) => `Step ${index + 1}: ${step}`)
+      .join("\n");
+
+    navigator.clipboard.writeText(roadmapText);
+
+    setCopied(true);
+
+    setTimeout(() => {
+      setCopied(false);
+    }, 2000);
+  }
+
+  function copyInterviewQuestions() {
+    if (!aiData?.interviewQuestions) return;
+
+    const questionsText = aiData.interviewQuestions
+      .map((question: string, index: number) => `Q${index + 1}. ${question}`)
+      .join("\n\n");
+
+    navigator.clipboard.writeText(questionsText);
+
+    setCopiedInterview(true);
+
+    setTimeout(() => {
+      setCopiedInterview(false);
+    }, 2000);
+  }
+
+  async function shareAnalysisSummary() {
+    if (!aiData || !result) return;
+
+    const summaryText = `
+CodeAtlas Repository Analysis
+
+Repository: ${result.owner}/${result.repo}
+
+Repository Score: ${aiData.overallScore}/100
+Difficulty: ${aiData.difficulty}
+
+Overview:
+${aiData.overview}
+
+Scores:
+Documentation: ${aiData.documentationScore}/100
+Organization: ${aiData.organizationScore}/100
+Beginner Friendly: ${aiData.beginnerFriendliness}/100
+
+Technologies:
+${aiData.technologies?.join(", ")}
+
+Learning Roadmap:
+${aiData.roadmap
+  ?.map((step: string, index: number) => `Step ${index + 1}: ${step}`)
+  .join("\n")}
+
+Interview Questions:
+${aiData.interviewQuestions
+  ?.map((question: string, index: number) => `Q${index + 1}. ${question}`)
+  .join("\n")}
+`;
+
+    try {
+      if (navigator.share) {
+        await navigator.share({
+          title: "CodeAtlas Repository Analysis",
+          text: summaryText,
+        });
+      } else {
+        await navigator.clipboard.writeText(summaryText);
+      }
+
+      setSharedSummary(true);
+
+      setTimeout(() => {
+        setSharedSummary(false);
+      }, 2000);
+    } catch (error) {
+      console.error("Share failed:", error);
+    }
+  }
 
   async function analyzeRepo() {
     try {
       setLoading(true);
-setAiData(null);
-setResult(null);
-setLoadingMessageIndex(0);
+      setAiData(null);
+      setResult(null);
+      setLoadingMessageIndex(0);
+      setCopied(false);
+      setCopiedInterview(false);
+      setSharedSummary(false);
 
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -62,29 +155,29 @@ setLoadingMessageIndex(0);
         body: JSON.stringify({ repoUrl }),
       });
 
-     const data = await res.json();
+      const data = await res.json();
 
-console.log("ANALYZE DATA:", data);
-console.log("TREE:", data.tree);
+      const summaryRes = await fetch("/api/summary", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(data),
+      });
 
-const summaryRes = await fetch("/api/summary", {
-  method: "POST",
-  headers: {
-    "Content-Type": "application/json",
-  },
-  body: JSON.stringify(data),
-});
+      const summaryData = await summaryRes.json();
 
-const summaryData = await summaryRes.json();
+      try {
+        const cleanedSummary = summaryData.summary
+          .replace(/```json/g, "")
+          .replace(/```/g, "")
+          .trim();
 
-
-
-try {
-  const parsed = JSON.parse(summaryData.summary);
-  setAiData(parsed);
-} catch (err) {
-  console.error("JSON Parse Error:", err);
-}
+        const parsed = JSON.parse(cleanedSummary);
+        setAiData(parsed);
+      } catch (err) {
+        console.error("JSON Parse Error:", err);
+      }
 
       setResult(data);
     } catch (error) {
@@ -94,19 +187,12 @@ try {
     }
   }
 
-const folders =
-  result?.tree
-    ?.filter((path: string) => path.includes("/"))
-    .map((path: string) => path.split("/")[0]);
-
-const uniqueFolders = [...new Set(folders)];
-
   return (
     <main className="min-h-screen bg-black text-white flex flex-col items-center p-6">
       <div className="w-full max-w-3xl mt-20">
         <h1 className="text-7xl font-extrabold text-center bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">
-  CodeAtlas
-</h1>
+          CodeAtlas
+        </h1>
 
         <p className="text-zinc-400 text-center mt-4 mb-10">
           Turn repositories into roadmaps.
@@ -123,158 +209,167 @@ const uniqueFolders = [...new Set(folders)];
         <button
           onClick={analyzeRepo}
           disabled={loading}
-          className="w-full mt-4 p-4 rounded-lg bg-white text-black font-semibold hover:bg-zinc-200 transition"
+          className="w-full mt-4 p-4 rounded-lg bg-white text-black font-semibold hover:bg-zinc-200 transition disabled:opacity-70"
         >
-          {loading
-  ? loadingMessages[loadingMessageIndex]
-  : "Analyze Repository"}
+          {loading ? loadingMessages[loadingMessageIndex] : "Analyze Repository"}
         </button>
-      
 
-{aiData && (
-  <div className="mt-8 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+        {aiData && (
+          <div className="mt-8 bg-zinc-900 p-6 rounded-xl border border-zinc-800">
+            <h2 className="text-3xl font-bold mb-6">
+              Repository Analysis
+            </h2>
 
-    <h2 className="text-3xl font-bold mb-6">
-      Repository Analysis
-    </h2>
-    <div className="bg-zinc-800 p-5 rounded-xl mt-6 mb-6">
-  <h3 className="font-bold text-xl mb-2">
-    Overview
-  </h3>
+            <div className="text-center mb-6">
+              <div className={`text-7xl font-bold ${scoreColor}`}>
+                {aiData.overallScore}
+              </div>
 
-  <p className="text-zinc-300">
-    {aiData.overview}
-  </p>
-</div>
-    
-    <div className="text-center mb-8">
-  <div className="text-7xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
-    {aiData.overallScore}
-  </div>
+              <p className="text-zinc-400 mt-2">
+                Repository Score
+              </p>
+            </div>
 
-  <p className="text-zinc-400 mt-2">
-    Repository Score
-  </p>
-</div>
+            <button
+              onClick={shareAnalysisSummary}
+              className="w-full bg-purple-600 hover:bg-purple-700 px-4 py-3 rounded-lg mb-6 transition font-semibold"
+            >
+              {sharedSummary ? "✅ Shared / Copied!" : "🔗 Share Analysis Summary"}
+            </button>
 
-  
+            <div className="bg-zinc-800 p-5 rounded-xl mb-6">
+              <h3 className="font-bold text-xl mb-2">
+                Overview
+              </h3>
 
-    <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+              <p className="text-zinc-300 leading-relaxed">
+                {aiData.overview}
+              </p>
+            </div>
 
-      <div className="bg-zinc-800 p-4 rounded-xl">
-        <p className="text-zinc-400 text-sm">
-          Documentation
-        </p>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
+              <div className="bg-zinc-800 p-4 rounded-xl">
+                <p className="text-zinc-400 text-sm">
+                  Documentation
+                </p>
 
-        <h3 className="text-3xl font-bold mt-2">
-          {aiData.documentationScore}
-        </h3>
-      </div>
+                <h3 className="text-3xl font-bold mt-2">
+                  {aiData.documentationScore}
+                </h3>
+              </div>
 
-      <div className="bg-zinc-800 p-4 rounded-xl">
-        <p className="text-zinc-400 text-sm">
-          Organization
-        </p>
+              <div className="bg-zinc-800 p-4 rounded-xl">
+                <p className="text-zinc-400 text-sm">
+                  Organization
+                </p>
 
-        <h3 className="text-3xl font-bold mt-2">
-          {aiData.organizationScore}
-        </h3>
-      </div>
+                <h3 className="text-3xl font-bold mt-2">
+                  {aiData.organizationScore}
+                </h3>
+              </div>
 
-      <div className="bg-zinc-800 p-4 rounded-xl">
-        <p className="text-zinc-400 text-sm">
-          Beginner Friendly
-        </p>
+              <div className="bg-zinc-800 p-4 rounded-xl">
+                <p className="text-zinc-400 text-sm">
+                  Beginner Friendly
+                </p>
 
-        <h3 className="text-3xl font-bold mt-2">
-          {aiData.beginnerFriendliness}
-        </h3>
-      </div>
+                <h3 className="text-3xl font-bold mt-2">
+                  {aiData.beginnerFriendliness}
+                </h3>
+              </div>
+            </div>
 
-    </div>
+            <div className="mt-6">
+              <span className="bg-blue-600 px-4 py-2 rounded-full text-sm font-semibold">
+                Difficulty: {aiData.difficulty}
+              </span>
+            </div>
 
-    <span className="bg-blue-600 px-4 py-2 rounded-full text-sm font-semibold">
-  Difficulty: {aiData.difficulty}
-</span>
+            {aiData.difficultyReason && (
+              <p className="text-zinc-400 mt-4">
+                {aiData.difficultyReason}
+              </p>
+            )}
 
-<p className="text-zinc-400 mt-4">
-  {aiData.difficultyReason}
-</p>
+            <h3 className="text-2xl font-bold mt-10 mb-4">
+              Technologies
+            </h3>
 
-    <h3 className="text-2xl font-bold mt-10 mb-4">
-      Technologies
-    </h3>
+            <div className="flex flex-wrap gap-2">
+              {aiData.technologies?.map((tech: string) => (
+                <span
+                  key={tech}
+                  className="bg-zinc-800 px-4 py-2 rounded-full"
+                >
+                  {tech}
+                </span>
+              ))}
+            </div>
 
-    <div className="flex flex-wrap gap-2">
-      {aiData.technologies?.map((tech: string) => (
-        <span
-          key={tech}
-          className="bg-zinc-800 px-4 py-2 rounded-full"
-        >
-          {tech}
-        </span>
-      ))}
-    </div>
+            <div className="flex justify-between items-center mt-10 mb-4">
+              <h3 className="text-2xl font-bold">
+                Learning Roadmap
+              </h3>
 
-    <button
-  onClick={copyRoadmap}
-  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg mb-4 transition"
->
-  {copied ? "✅ Copied!" : "📋 Copy Roadmap"}
-</button>
+              <button
+                onClick={copyRoadmap}
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition text-sm font-semibold"
+              >
+                {copied ? "✅ Copied!" : "📋 Copy Roadmap"}
+              </button>
+            </div>
 
-    <h3 className="text-2xl font-bold mt-10 mb-4">
-      Learning Roadmap
-    </h3>
+            <div className="space-y-3">
+              {aiData.roadmap?.map((step: string, index: number) => (
+                <div
+                  key={index}
+                  className="bg-zinc-800 p-4 rounded-xl"
+                >
+                  Step {index + 1} → {step}
+                </div>
+              ))}
+            </div>
 
-    <div className="space-y-3">
-      {aiData.roadmap?.map(
-        (step: string, index: number) => (
-          <div
-            key={index}
-            className="bg-zinc-800 p-4 rounded-xl"
-          >
-            Step {index + 1} → {step}
+            <div className="flex justify-between items-center mt-10 mb-4">
+              <h3 className="text-2xl font-bold">
+                Interview Questions
+              </h3>
+
+              <button
+                onClick={copyInterviewQuestions}
+                className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg transition text-sm font-semibold"
+              >
+                {copiedInterview ? "✅ Copied!" : "📋 Copy Questions"}
+              </button>
+            </div>
+
+            <div className="space-y-3">
+              {aiData.interviewQuestions?.map(
+                (question: string, index: number) => (
+                  <div
+                    key={index}
+                    className="bg-zinc-800 p-4 rounded-xl border border-zinc-700"
+                  >
+                    <span className="font-semibold">
+                      Q{index + 1}.
+                    </span>{" "}
+                    {question}
+                  </div>
+                )
+              )}
+            </div>
           </div>
-        )
-      )}
-    </div>
-    <h3 className="text-2xl font-bold mt-10 mb-4">
-  Interview Questions
-</h3>
-
-<div className="space-y-3">
-  {aiData.interviewQuestions?.map(
-    (question: string, index: number) => (
-      <div
-        key={index}
-        className="bg-zinc-800 p-4 rounded-xl border border-zinc-700"
-      >
-        <span className="font-semibold">
-          Q{index + 1}.
-        </span>{" "}
-        {question}
-      </div>
-    )
-  )}
-</div>
-
-  </div>
-)}
+        )}
 
         {result && (
           <div className="mt-10 bg-zinc-900 rounded-xl p-6 border border-zinc-800">
-
-
             <h2 className="text-3xl font-bold">
-              {result.projectInfo?.name ||
-                `${result.owner}/${result.repo}`}
+              {result.projectInfo?.name || `${result.owner}/${result.repo}`}
             </h2>
 
             <div className="mt-4 space-y-2 text-zinc-300">
               <p>
-                <strong>Repository:</strong>{" "}
-                {result.owner}/{result.repo}
+                <strong>Repository:</strong> {result.owner}/{result.repo}
               </p>
 
               <p>
@@ -284,14 +379,12 @@ const uniqueFolders = [...new Set(folders)];
 
               <p>
                 <strong>Package Manager:</strong>{" "}
-                {result.projectInfo?.packageManager ||
-                  "Unknown"}
+                {result.projectInfo?.packageManager || "Unknown"}
               </p>
 
               <p>
                 <strong>Version:</strong>{" "}
-                {result.projectInfo?.version ||
-                  "Unknown"}
+                {result.projectInfo?.version || "Unknown"}
               </p>
             </div>
 
@@ -300,50 +393,55 @@ const uniqueFolders = [...new Set(folders)];
             </h3>
 
             <div className="grid gap-2">
-              {result.importantFiles?.map(
-                (file: any) => (
-                  <div
-                    key={file.path}
-                    className="bg-zinc-800 p-3 rounded-lg"
-                  >
-                    {file.path}
-                  </div>
-                )
-              )}
+              {result.importantFiles?.map((file: any) => (
+                <div
+                  key={file.path}
+                  className="bg-zinc-800 p-3 rounded-lg"
+                >
+                  {file.path}
+                </div>
+              ))}
             </div>
-       
+
             <h3 className="text-xl font-semibold mt-8 mb-3">
               Top Dependencies
             </h3>
 
             <div className="flex flex-wrap gap-2">
-              {result.projectInfo?.devDependencies?.map(
-                (dep: string) => (
+              {topDependencies.length > 0 ? (
+                topDependencies.map((dep: any) => (
                   <span
                     key={dep}
                     className="bg-zinc-800 px-3 py-1 rounded-full text-sm"
                   >
                     {dep}
                   </span>
-                )
+                ))
+              ) : (
+                <p className="text-zinc-400">
+                  No dependencies found.
+                </p>
               )}
             </div>
-            <h3 className="text-2xl font-bold mt-10 mb-4">
-  Architecture
-</h3>
 
-<div className="bg-black rounded-xl p-4 border border-zinc-800">
-  <pre className="text-green-400">
-{uniqueFolders?.map(folder => `📁 ${folder}`).join("\n")}
-  </pre>
-</div>
+            <h3 className="text-2xl font-bold mt-10 mb-4">
+              Architecture
+            </h3>
+
+            <div className="bg-black rounded-xl p-4 border border-zinc-800">
+              <pre className="text-green-400 whitespace-pre-wrap text-sm">
+                {uniqueFolders.length > 0
+                  ? uniqueFolders.map((folder) => `📁 ${folder}`).join("\n")
+                  : "No architecture data found."}
+              </pre>
+            </div>
 
             <h3 className="text-xl font-semibold mt-8 mb-3">
               README Preview
             </h3>
 
             <pre className="bg-black text-green-400 p-4 rounded-lg overflow-auto max-h-96 whitespace-pre-wrap text-sm">
-              {result.readmePreview}
+              {result.readmePreview || "No README found."}
             </pre>
           </div>
         )}
