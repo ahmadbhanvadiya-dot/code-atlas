@@ -21,6 +21,9 @@ export default function Home() {
   const [copiedInterview, setCopiedInterview] = useState(false);
   const [sharedSummary, setSharedSummary] = useState(false);
   const [error, setError] = useState("");
+  const [repoQuestion, setRepoQuestion] = useState("");
+const [repoAnswer, setRepoAnswer] = useState("");
+const [asking, setAsking] = useState(false);
 
   useEffect(() => {
     if (!loading) return;
@@ -138,6 +141,40 @@ ${aiData.interviewQuestions
     }
   }
 
+async function askRepoQuestion() {
+  if (!repoQuestion.trim() || !result) return;
+
+  try {
+    setAsking(true);
+    setRepoAnswer("");
+
+    const res = await fetch("/api/ask", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        repoData: result,
+        question: repoQuestion,
+      }),
+    });
+
+    const data = await res.json();
+
+    if (!data.success) {
+      setRepoAnswer(data.error || "Failed to answer question.");
+      return;
+    }
+
+    setRepoAnswer(data.answer);
+  } catch (error) {
+    console.error(error);
+    setRepoAnswer("Something went wrong while asking CodeAtlas.");
+  } finally {
+    setAsking(false);
+  }
+}
+
   async function analyzeRepo() {
     try {
       setLoading(true);
@@ -148,6 +185,8 @@ ${aiData.interviewQuestions
       setCopied(false);
       setCopiedInterview(false);
       setSharedSummary(false);
+      setRepoQuestion("");
+      setRepoAnswer(""); 
 
       const res = await fetch("/api/analyze", {
         method: "POST",
@@ -266,6 +305,45 @@ ${aiData.interviewQuestions
                 {aiData.overview}
               </p>
             </div>
+
+            {result && (
+  <div className="mt-10 bg-zinc-900 rounded-xl p-6 border border-zinc-800">
+    <h2 className="text-3xl font-bold mb-4">
+      Ask this Repository
+    </h2>
+
+    <p className="text-zinc-400 mb-4">
+      Ask CodeAtlas anything about this repo’s architecture, tech stack, files, or learning path.
+    </p>
+
+    <textarea
+      value={repoQuestion}
+      onChange={(e) => setRepoQuestion(e.target.value)}
+      placeholder="Example: Where is authentication handled?"
+      className="w-full min-h-28 p-4 rounded-lg bg-black border border-zinc-700 outline-none text-white"
+    />
+
+    <button
+      onClick={askRepoQuestion}
+      disabled={asking || !repoQuestion.trim()}
+      className="w-full mt-4 p-4 rounded-lg bg-blue-600 hover:bg-blue-700 disabled:opacity-60 transition font-semibold"
+    >
+      {asking ? "🧠 Thinking..." : "Ask CodeAtlas"}
+    </button>
+
+    {repoAnswer && (
+      <div className="mt-6 bg-zinc-800 p-5 rounded-xl">
+        <h3 className="text-xl font-bold mb-3">
+          Answer
+        </h3>
+
+        <p className="text-zinc-300 whitespace-pre-wrap leading-relaxed">
+          {repoAnswer}
+        </p>
+      </div>
+    )}
+  </div>
+)}
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
               <div className="bg-zinc-800 p-4 rounded-xl">
