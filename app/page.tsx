@@ -65,9 +65,9 @@ const uniqueFolders = [...new Set(folders)];
   return (
     <main className="min-h-screen bg-black text-white flex flex-col items-center p-6">
       <div className="w-full max-w-3xl mt-20">
-        <h1 className="text-6xl font-bold text-center">
-          CodeAtlas
-        </h1>
+        <h1 className="text-7xl font-extrabold text-center bg-gradient-to-r from-cyan-400 via-blue-500 to-purple-500 bg-clip-text text-transparent">
+  CodeAtlas
+</h1>
 
         <p className="text-zinc-400 text-center mt-4 mb-10">
           Turn repositories into roadmaps.
@@ -98,6 +98,15 @@ const uniqueFolders = [...new Set(folders)];
     <h2 className="text-3xl font-bold mb-6">
       Repository Analysis
     </h2>
+    <div className="bg-zinc-800 p-5 rounded-xl mt-6 mb-6">
+  <h3 className="font-bold text-xl mb-2">
+    Overview
+  </h3>
+
+  <p className="text-zinc-300">
+    {aiData.overview}
+  </p>
+</div>
     
     <div className="text-center mb-8">
   <div className="text-7xl font-bold bg-gradient-to-r from-blue-500 to-purple-500 bg-clip-text text-transparent">
@@ -167,6 +176,17 @@ const uniqueFolders = [...new Set(folders)];
         </span>
       ))}
     </div>
+
+    <button
+  onClick={() =>
+    navigator.clipboard.writeText(
+      aiData.roadmap.join("\n")
+    )
+  }
+  className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg mb-4"
+>
+  📋 Copy Roadmap
+</button>
 
     <h3 className="text-2xl font-bold mt-10 mb-4">
       Learning Roadmap
