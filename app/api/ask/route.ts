@@ -2,7 +2,7 @@ import { NextResponse } from "next/server";
 
 export async function POST(req: Request) {
   try {
-    const { repoData, question } = await req.json();
+    const { repoData, question, history } = await req.json();
 
     if (!question || !question.trim()) {
       return NextResponse.json(
@@ -27,8 +27,20 @@ ${file.content}
         .join("\n\n")
         .slice(0, 25000) || "";
 
+    const conversationHistory =
+      history && history.length > 0
+        ? history
+            .map(
+              (message: any) =>
+                `${message.role === "user" ? "User" : "Atlas AI"}: ${
+                  message.text
+                }`
+            )
+            .join("\n")
+        : "No previous messages.";
+
     const prompt = `
-You are CodeAtlas, an AI codebase assistant.
+You are Atlas AI Bot, an AI codebase assistant inside CodeAtlas.
 
 Answer the user's question directly and conversationally.
 
@@ -40,6 +52,7 @@ Rules:
 - Use bullet points only when they improve readability.
 - If the user asks about UI, design, color, layout, or styling, summarize the visual style in simple language first.
 - If the answer is not available in the provided files, say that clearly.
+- Use the conversation history to understand follow-up questions.
 
 Repository:
 ${repoData.owner}/${repoData.repo}
@@ -53,9 +66,13 @@ ${JSON.stringify(repoData.projectInfo, null, 2)}
 Important Files:
 ${importantFilesText}
 
+Conversation History:
+${conversationHistory}
+
 User Question:
 ${question}
 `;
+
     const response = await fetch(
       `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${process.env.GEMINI_API_KEY}`,
       {

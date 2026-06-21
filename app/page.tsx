@@ -28,22 +28,21 @@ export default function Home() {
   const [chatLoading, setChatLoading] = useState(false);
   const [chatOpen, setChatOpen] = useState(false);
 
-  useEffect(() => {
+ useEffect(() => {
+  if (!loading) return;
 
-    useEffect(() => {
+  const interval = setInterval(() => {
+    setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+  }, 1500);
+
+  return () => clearInterval(interval);
+}, [loading]);
+
+useEffect(() => {
   chatEndRef.current?.scrollIntoView({
     behavior: "smooth",
   });
 }, [messages, chatLoading]);
-
-    if (!loading) return;
-
-    const interval = setInterval(() => {
-      setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
-    }, 1500);
-
-    return () => clearInterval(interval);
-  }, [loading]);
 
   const folders =
     result?.tree
@@ -172,9 +171,10 @@ ${aiData.interviewQuestions
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          repoData: result,
-          question,
-        }),
+  repoData: result,
+  question,
+  history: messages.slice(-6),
+}),
       });
 
       const data = await res.json();
@@ -265,7 +265,7 @@ ${aiData.interviewQuestions
       setMessages([
         {
           role: "bot",
-          text: `I've scanned ${data.owner}/${data.repo}. Ask me anything about the architecture, files, tech stack, roadmap, or improvements.`,
+          text: `I've scanned ${data.owner}/${data.repo}. Ask Atlas AI anything about the architecture, files, tech stack, roadmap, or improvements.`,
         },
       ]);
     } catch (error) {
